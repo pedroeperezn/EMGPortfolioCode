@@ -9,13 +9,12 @@
 #include "NiagaraComponent.h"
 #include "EMGItemSpawner.generated.h"
 
-
-
 class AShoppingItem;
 class UBillboardComponent;
 class UNiagaraComponent;
 class UNiagaraSystem;
 
+//Types of spawnable that spawners can handle
 UENUM(BlueprintType)
 enum class ETypoeOfSpawnable : uint8
 {
@@ -23,12 +22,14 @@ enum class ETypoeOfSpawnable : uint8
 	Powerup
 };
 
+
 UCLASS()
 class EVERYTHINGMUSTGO_API AEMGItemSpawner : public AActor
 {
 	GENERATED_BODY()
 
 public:
+
 	// Sets default values for this actor's properties
 	AEMGItemSpawner();
 	
@@ -38,12 +39,15 @@ public:
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
 	ETypoeOfSpawnable TypeOfSpawnable;
 	
+	//Allows enabling or disabling spawning
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
 	bool bCanSpawn;
 
+	//Sets reference to data table from editor
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
 	UDataTable* ItemDataTable;
 
+	//spawning rate
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
 	float SpawnRate = 1.f;
 	
@@ -69,18 +73,10 @@ protected:
 	UFUNCTION(BlueprintNativeEvent)
 	void PlayHighValueAudioCue();
 	
-
-	
 	UPROPERTY(EditAnywhere,BlueprintReadOnly)
-	FTimerHandle SpawnTH; // spawn timer handle
+	FTimerHandle SpawnTH;
 	
-
-
+	//Data structure created for storing items in player
 	UPROPERTY(Replicated, BlueprintReadOnly)	
 	FItemsInInventory ItemsInInventory;
-
-	
-
-
-	
 };
