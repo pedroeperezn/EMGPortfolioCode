@@ -59,14 +59,17 @@ void UEMGPowerup::TickComponent(float DeltaTime, ELevelTick TickType, FActorComp
 
 void UEMGPowerup::Server_UsePowerup_Implementation()
 {
-	
+	//Checks which is the current power-up
 	switch (CurrentPowerup)
 	{
-		
+	
 	case EPowerUpType::SpeedBoost:
 		{
+			//calls method to apply modifiers
 			Server_SpeedPowerup();
+			//sets timer to call method to revert powerup
 			GetWorld()->GetTimerManager().SetTimer(PowerupTimerHandle,this, &UEMGPowerup::Server_RevertPowerup,SpeedPowerupDuration,false);
+			//Broadcast call for playing sound cue
 			OnPlaySpeedCue.Broadcast();
 			break;
 		}
@@ -74,7 +77,6 @@ void UEMGPowerup::Server_UsePowerup_Implementation()
 	case EPowerUpType::InfiniteInventory:
 		{
 			InfiniteInventory();
-			//CurrentPowerupDuration = InventoryPowerupDuration;
 			GetWorld()->GetTimerManager().SetTimer(PowerupTimerHandle,this, &UEMGPowerup::Server_RevertPowerup,InventoryPowerupDuration,false);
 			OnPlayInfiniteCue.Broadcast();
 			break;
@@ -88,7 +90,7 @@ void UEMGPowerup::Server_UsePowerup_Implementation()
 			break;
 		}
 
-
+	//for goo and slippery trap, spawn traps, no modifier on player
 	case EPowerUpType::Gooey:
 		{
 			if(!GooeyHazardRef)
@@ -100,10 +102,12 @@ void UEMGPowerup::Server_UsePowerup_Implementation()
 				return;
 			}
 			
+			//set spawn parameters and spawn actor
 			FVector spawningLocation = PowerupSpawn->GetComponentLocation();
 			AEMG_ObstacleHazard* GooeyHazard = GetWorld()->SpawnActor<AEMG_ObstacleHazard>(GooeyHazardRef,spawningLocation,
 				GetOwner()->GetActorRotation(),PowerupSpawnParams);
 
+			//boradcast function to call sound cue
 			OnPlayGooeyCue.Broadcast();
 			Server_RevertPowerup();
 			break;
@@ -131,9 +135,6 @@ void UEMGPowerup::Server_UsePowerup_Implementation()
 		
 	}
 }
-
-
-
 
 
 
@@ -234,11 +235,13 @@ void UEMGPowerup::Multicast_AssignPlayerPowerup_Implementation(EPowerUpType Powe
 	CurrentPowerup = PowerupToAssign;
 }
 
+//Calls for server
 void UEMGPowerup::Server_SpeedPowerup_Implementation()
 {
 	Multicast_SpeedPowerup();
 }
 
+//Calls for clients
 void UEMGPowerup::Multicast_SpeedPowerup_Implementation()
 {
 	if(!PlayerRef)
@@ -246,13 +249,15 @@ void UEMGPowerup::Multicast_SpeedPowerup_Implementation()
 		return;
 	}
 
+	//Set duration of the power-up
 	CurrentPowerupDuration = SpeedPowerupDuration;
 	
+	//Clears weight of the cart from affecting the movement
 	PlayerRef->InventoryComp->bIsWeightAffectingMovement = false;
 	
+	//Sets new parameters for quicker movement
 	PlayerRef->GetCharacterMovement()->MaxWalkSpeed = PowerUpSettings.Speed;
 	PlayerRef->GetCharacterMovement()->MaxAcceleration = PowerUpSettings.Acceleration;
-	
 	const FRotator PlayerRotation = PlayerRef->GetCharacterMovement()->RotationRate; 
 	PlayerRef->GetCharacterMovement()->RotationRate = FRotator(PlayerRotation.Pitch,PowerUpSettings.RotationRate,PlayerRotation.Roll);	
 }
@@ -265,6 +270,8 @@ void UEMGPowerup::Server_UseShieldPowerup_Implementation()
 
 void UEMGPowerup::Multicast_UseShieldPowerup_Implementation()
 {
+	//shield only sets it's duration. Ramming ability and stealing items ability check if the player has a shield
+	//if so, they don't have effect
 	CurrentPowerupDuration = ShieldPowerupDuration;
 }
 
@@ -279,23 +286,25 @@ void UEMGPowerup::RevertSpeedPowerup()
 
 void UEMGPowerup::InfiniteInventory()
 {
+	//Blocks weight from affecting player movement
 	PlayerRef->InventoryComp->bIsWeightAffectingMovement = false;
 
+	//Sets power-up duration
 	CurrentPowerupDuration = InventoryPowerupDuration;
 	
+	//Sets movement to normal
 	PlayerRef->GetCharacterMovement()->MaxAcceleration = PlayerRef->InitialMaxAcceleration;
 	PlayerRef->GetCharacterMovement()->MaxWalkSpeed = PlayerRef->InitialMaxSpeed;
 	PlayerRef->GetCharacterMovement()->GroundFriction = PlayerRef->InitialGroundFriction;
 	PlayerRef->GetCharacterMovement()->Mass = PlayerRef->InitialMass;
 	
-	
+	//Increase inventory capacity to 100
 	PlayerRef->InventoryComp->InventoryCapacity = InventoryPowerUpCap;
 }
 
 void UEMGPowerup::RevertInfiniteInventory()
 {
 	PlayerRef->InventoryComp->InventoryCapacity = PlayerRef->InventoryComp->InitialInventoryCapacity;
-
 	PlayerRef->InventoryComp->bIsWeightAffectingMovement = true;
 	PlayerRef->InventoryComp->UpdatePlayersCartWeight();
 }

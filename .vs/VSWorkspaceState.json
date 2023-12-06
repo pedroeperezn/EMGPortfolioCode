@@ -1,7 +1,9 @@
 {
   "ExpandedNodes": [
-    ""
+    "",
+    "\\Player",
+    "\\Player\\Components"
   ],
-  "SelectedNode": "\\Components",
+  "SelectedNode": "\\Player\\Components\\EMGPowerup.h",
   "PreviewInSolutionExplorer": false
 }
